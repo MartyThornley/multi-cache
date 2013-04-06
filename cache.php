@@ -25,6 +25,14 @@
 		define( 'MULTI_CACHE_PLUGIN_DIR' , 	dirname( __FILE__ ) );
 
 	include_once( MULTI_CACHE_PLUGIN_DIR . '/library/functions/shared-functions.php' );
+
+	/******************************* START URL FINDING *****************************
+	
+	
+		// better way to do this?
+		
+	
+	**********************************/
 	
 	// need to check domain.com ( $_SERVER['HTTP_HOST'] ) and domain.com/something ( $_SERVER['REQUEST_URI'] )
 	
@@ -60,7 +68,20 @@
 		$first_letters[] = substr( $base_domain , 0 , 1 );
 
 	if ( $this_sub_directory != '' )
-		$first_letters[] = substr( $this_sub_directory , 0 , 1 );;
+		$first_letters[] = substr( $this_sub_directory , 0 , 1 );
+
+
+	/** END URL FINDING *****************************/
+
+
+
+	/******************************* START TESTS *****************************
+	
+	
+		// ideally this whole thing can be a function or series of functions and be cleaner
+		
+	
+	**********************************/
 	
 	if ( function_exists( 'is_admin' ) && is_admin() )
 		return hyper_cache_exit();
@@ -142,7 +163,19 @@
 	// Multisite - skip files ??
 	if ( function_exists( 'is_multisite' ) && is_multisite() && strpos( $hyper_uri, '/files/' ) !== false ) 
 		return hyper_cache_exit();
+	
+	/** END TESTS **********************************/
+	
 
+	/******************************* START LOOKING FOR BLOGID **********************************
+	
+		
+		If we made it this far, start testing for cache files and creating new ones
+	
+	
+	**********************************/
+
+	
 	// Prefix host, and for wordpress 'pretty URLs' strip trailing slash (e.g. '/my-post/' -> 'my-site.com/my-post')
 	$hyper_uri = $_SERVER['HTTP_HOST'] . $hyper_uri;
 	
@@ -204,6 +237,22 @@
 	// if we had no saved ids we can exit
 	if ( !isset( $blog_id ) || $blog_id == '' )
 		return hyper_cache_exit();
+
+
+	/** END LOOKING FOR BLOGID **********************************/
+
+
+
+	
+	/******************************* START LOOKING FOR CACHED PAGE **********************************
+	
+	
+	 if we have made it here, we should know what blogid we want and can try to do stuff
+	
+	
+	**********************************/
+
+
 	
 	// add 9 digits to allow for huge sites
 	$cache_dir = $hyper_cache_path .'pages/'. sprintf("%09s", $blog_id);
@@ -214,18 +263,30 @@
 	if ( !file_exists( $cache_dir ) )
 		mkdir( $cache_dir );
 	
-	// The name of the file with html and other data	
 	$hyper_cache_name = multi_cache_hash( $hyper_uri );
-
-	//print '<pre>'; print_r($hyper_uri); print '</pre>'; 
-
-		
 	$hc_file = $cache_dir .'/'. $hyper_cache_name . hyper_mobile_type() . '.dat';
-
+	
+	/*
+	 * We have our correct file name - does it exist?
+	 */
 	if ( !file_exists( $hc_file ) ) {
 	    multi_cache_start( false );
 	    return;
 	}
+	
+	/** END LOOKING FOR CACHED PAGE **********************************/
+
+
+
+	/******************************* START VALIDATING CACHE **********************************
+	
+	
+	 if we have made it here, we should know what blogid we want and can try to do stuff
+	
+	
+	**********************************/
+	
+		
 	// check file time and age
 	$hc_file_time = @filemtime($hc_file);
 	$hc_file_age = time() - $hc_file_time;
@@ -253,17 +314,24 @@
 	    return;
 	}
 
-	// Valid cache file check ends here
-	
 	if ( !empty($hyper_data['location'] ) ) {
 	    header( 'Location: ' . $hyper_data['location'] );
 	    flush();
 	    die();
 	}
+
+
+	/** END VALIDATION OF CACHE **********************************/
 	
-	/*
-	 * It's time to serve the cached page
-	 */ 
+	
+	/******************************* START ACTUAL CACHING **********************************
+	
+	
+	 if we have made it here, we should know what blogid we want and can try to do stuff
+	
+	
+	**********************************/
+
 	
 	// True if browser caching NOT enabled (default)
 	if ( !$hyper_cache_browsercache ) {
@@ -326,3 +394,6 @@
 	
 	flush();
 	die();
+	
+	/** END CACHE - we flushed ouput and died - all done! **********************************/
+	

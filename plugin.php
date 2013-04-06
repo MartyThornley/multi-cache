@@ -198,7 +198,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 				if ( isset( $args['post'] ) ) {
 				
 					$cache_files = array_merge( $cache_files , multi_cache_get_post_files( $post_id ) );	
-		
+				
 				}
 				
 			break;
@@ -240,7 +240,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 		
 		if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) 
     		return $post_id;
-
+		
 		multi_cache_delete( array( 'cache' => 'post' , 'post' => $post_id ) ); 
 		
 	}
@@ -275,8 +275,8 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 			
 			 	$file = multi_cache_hash( $link ) .'.dat';
 				
-				$cache_file = trailingslashit( MULTI_CACHE_PAGE_CACHE  ) . sprintf( "%09s", $wpdb->blogid );
-			
+				$cache_file = trailingslashit( MULTI_CACHE_PAGE_CACHE  ) . sprintf( "%09s", $wpdb->blogid ) . '/'. $file;
+
 			    if ( $cache_file != '' && file_exists( $cache_file ) && !is_dir( $cache_file ) ) {
 					$cache_files[] = $cache_file;
 				}
@@ -289,7 +289,9 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 		
 	}
 	
-	// Completely remove a directory and it's content.
+	/*
+	 * Completely remove a directory and it's content.
+	 */
 	function multi_cache_delete_path( $dir ) {
 		
 		if ( !is_dir( $dir ) || empty( $dir ) )

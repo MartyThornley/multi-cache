@@ -49,6 +49,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 		
 
 	define( 'MULTI_CACHE_PLUGIN_DIR' , 	dirname( __FILE__ ) );
+	define( 'MULTI_CACHE_PLUGIN_URL' ,	plugins_url( basename( dirname( __FILE__ ) ) ) );	
 	
 	$hyper_invalidated = false;
 	$hyper_invalidated_post_id = null;
@@ -70,14 +71,19 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 	function multi_cache_init() {
 		
 		multicache_initial_options();
+
+		add_action( 'wp_enqueue_scripts' , 	'multi_cache_enqueue' );
 		
-		add_action( 'hyper_clean' , 	'hyper_clean' );
-		
-		add_action( 'switch_theme' , 	'hyper_cache_invalidate' , 0 );
-		
-		add_action( 'save_post' , 		'multi_cache_delete_post' );
-		add_action( 'publish_post' , 	'multi_cache_delete_post' );
-		add_action( 'delete_post' , 	'multi_cache_delete_post' );
+		add_action( 'hyper_clean' , 		'hyper_clean' );
+		add_action( 'switch_theme' , 		'hyper_cache_invalidate' , 0 );
+				
+		add_action( 'save_post' , 			'multi_cache_delete_post' );
+		add_action( 'publish_post' , 		'multi_cache_delete_post' );
+		add_action( 'delete_post' , 		'multi_cache_delete_post' );
+
+		add_action( 'wp_before_admin_bar_render' , 	'multi_cache_custom_admin_bar' );
+
+
 
 		if ( is_admin() ) {
 	
@@ -157,6 +163,12 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 			add_submenu_page( 'settings.php', 'Multi Cache', 'Multi Cache', 'manage_options', 'multi_cache_admin' , 'multi_cache_admin' );
 		else
 	    	add_options_page( 'Multi Cache', 'Multi Cache', 'manage_options', 'multi_cache_admin' , 'multi_cache_admin' );
+	}
+
+	function multi_cache_enqueue(){
+		
+		wp_enqueue_style( 'multi-cache-style' , trailingslashit( MULTI_CACHE_PLUGIN_URL ) . 'library/css/style.css' );
+	
 	}
 	
 	// Completely invalidate the cache. The hyper-cache directory is renamed
@@ -447,6 +459,74 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 			}
 		
 		}	
+	
+	}
+
+	function multi_cache_custom_admin_bar() {
+		
+	    global $wp_admin_bar, $current_user;
+	    
+		if ( !is_admin_bar_showing() )
+	        return;
+		
+		if ( ! current_user_can( 'edit_posts' ) )
+			return;
+			
+		$menu_id = "multi-cache-menu";
+		
+		// create main menu item
+	    $wp_admin_bar->add_menu( array(
+	        'id'   => $menu_id,
+			'parent' => 'top-secondary',
+	        'meta' => array(),
+	        'title' => "Cache",
+	        'href' => '' ) 
+		);
+		
+		// clear network cache - only for super admins
+		if ( is_multisite() && is_super_admin() ) {
+
+			$wp_admin_bar->add_menu( array(
+	          	'parent' => $menu_id,
+       			'id'   => $menu_id.'-network',
+	
+	          	'title' => "Clear Network Cache",
+	          	'href' => '',
+	          	'meta' => array()
+	      	) );
+		
+		}
+		
+		// clear individual site cache
+		$wp_admin_bar->add_menu( array(
+          	'parent' => $menu_id,
+       		'id'   => $menu_id.'-site',
+          	'title' => "Clear Site Cache",
+          	'href' => '',
+          	'meta' => array()
+      	) );
+		
+		// clear individual post cache
+		if ( !is_admin() || strpos( $_SERVER['PHP_SELF'] , 'post.php' ) !== false ) {
+		
+			$wp_admin_bar->add_menu( array(
+	          	'parent' => $menu_id,
+		       	'id'   => $menu_id.'-page',
+	          	'title' => "Clear Page Cache",
+	          	'href' => '',
+	          	'meta' => array()
+	      	) );
+
+		}
+
+		// link to settings page
+		$wp_admin_bar->add_menu( array(
+          	'parent' => $menu_id,
+	       	'id'   => $menu_id.'-settings',
+          	'title' => "Cache Settings",
+          	'href' => '',
+          	'meta' => array()
+      	) );		
 	
 	}
 	

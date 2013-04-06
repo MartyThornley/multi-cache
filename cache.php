@@ -84,23 +84,23 @@
 	**********************************/
 	
 	if ( function_exists( 'is_admin' ) && is_admin() )
-		return hyper_cache_exit();
+		return multi_cache_exit();
 	
 	// If no-cache header support is enabled and the browser explicitly requests a fresh page, do not cache
 	if ( $hyper_cache_nocache && ( ( !empty($_SERVER['HTTP_CACHE_CONTROL']) && $_SERVER['HTTP_CACHE_CONTROL'] == 'no-cache' ) || ( !empty($_SERVER['HTTP_PRAGMA']) && $_SERVER['HTTP_PRAGMA'] == 'no-cache')  ) ) 
-		return hyper_cache_exit();
+		return multi_cache_exit();
 	
 	// Do not cache post request (comments, plugins and so on)
 	if ( $_SERVER["REQUEST_METHOD"] == 'POST' ) 
-		return hyper_cache_exit();
+		return multi_cache_exit();
 	
 	// Try to avoid enabling the cache if sessions are managed with request parameters and a session is active
 	if ( defined( 'SID' ) && SID != '' ) 
-		return hyper_cache_exit();
+		return multi_cache_exit();
 	
 	// don't cache robots.txt
 	if ( strpos( $hyper_uri, 'robots.txt' ) !== false ) 
-		return hyper_cache_exit();
+		return multi_cache_exit();
 
 	// Checks for rejected urls
 	if ( $hyper_cache_reject !== false ) {
@@ -109,12 +109,12 @@
 			// finds exact url
 	        if ( substr($uri, 0, 1) == '"') {
 	            if ( $uri == '"' . $hyper_uri . '"' ) 
-					return hyper_cache_exit();
+					return multi_cache_exit();
 	        }
 			
 			// finds start of string - /blogs will skip /blogsite
 	        if ( substr( $hyper_uri , 0 , strlen( $uri ) ) == $uri ) 
-				return hyper_cache_exit();
+				return multi_cache_exit();
 	    }
 	}
 
@@ -123,7 +123,7 @@
 	    $hyper_agent = strtolower( $_SERVER['HTTP_USER_AGENT'] );
 	    foreach ( $hyper_cache_reject_agents as $hyper_a ) {
 	        if ( strpos( $hyper_agent, $hyper_a ) !== false ) 
-				return hyper_cache_exit();
+				return multi_cache_exit();
 	    }
 	}
 	
@@ -132,7 +132,7 @@
 	    foreach ( $hyper_cache_reject_cookies as $hyper_c ) {
 	        foreach ( $_COOKIE as $n=>$v ) {
 	            if ( substr( $n, 0, strlen( $hyper_c ) ) == $hyper_c ) 
-					return hyper_cache_exit();
+					return multi_cache_exit();
 	        }
 	    }
 	}
@@ -143,7 +143,7 @@
 		
 			// If it's required to bypass the cache when the visitor is a commenter, stop.
 		    if ( $hyper_cache_comment && substr( $n, 0, 15 ) == 'comment_author_' ) 
-				return hyper_cache_exit();
+				return multi_cache_exit();
 		
 		    // This test cookie makes to cache not work!!!
 		    if ( $n == 'wordpress_test_cookie' ) 
@@ -151,18 +151,18 @@
 		    
 			// wp 2.5 and wp 2.3 have different cookie prefix, skip cache if a post password cookie is present, also
 		    if (substr($n, 0, 14) == 'wordpressuser_' || substr($n, 0, 10) == 'wordpress_' || substr($n, 0, 12) == 'wp-postpass_' || substr($n, 0, 20) == 'wordpress_logged_in_' ) {
-		        return hyper_cache_exit();
+		        return multi_cache_exit();
 		    }
 		}
 	}
 
 	// Do not cache WP pages, even if those calls typically don't go throught this script
 	if ( strpos( $hyper_uri, '/wp-' ) !== false ) 
-		return hyper_cache_exit();
+		return multi_cache_exit();
 
 	// Multisite - skip files ??
 	if ( function_exists( 'is_multisite' ) && is_multisite() && strpos( $hyper_uri, '/files/' ) !== false ) 
-		return hyper_cache_exit();
+		return multi_cache_exit();
 	
 	/** END TESTS **********************************/
 	
@@ -181,7 +181,7 @@
 	
 	
 	if ( !is_array( $first_letters ) )
-		return hyper_cache_exit();
+		return multi_cache_exit();
 					//print_r($first_letters);
 	// based on urls, look for saved blog ids under the first letters
 	
@@ -236,7 +236,7 @@
 
 	// if we had no saved ids we can exit
 	if ( !isset( $blog_id ) || $blog_id == '' )
-		return hyper_cache_exit();
+		return multi_cache_exit();
 
 
 	/** END LOOKING FOR BLOGID **********************************/

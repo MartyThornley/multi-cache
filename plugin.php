@@ -81,9 +81,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 		add_action( 'publish_post' , 		'multi_cache_delete_post' );
 		add_action( 'delete_post' , 		'multi_cache_delete_post' );
 
-		add_action( 'wp_before_admin_bar_render' , 	'multi_cache_custom_admin_bar' );
-
-
+		add_action( 'wp_before_admin_bar_render' , 	'multi_cache_custom_admin_bar' , 99 );
 
 		if ( is_admin() ) {
 	

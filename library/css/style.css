@@ -1,7 +1,7 @@
 /*
  * Styles for admin bar
  */
-	#wpadminbar ul li#wp-admin-bar-multi-cache-menu:last-child, #wpadminbar ul li#wp-admin-bar-multi-cache-menu:last-child > .ab-item 
+	#wpadminbar .quicklinks .ab-top-secondary>li#wp-admin-bar-multi-cache-menu, #wpadminbar .quicklinks .ab-top-secondary>li#wp-admin-bar-multi-cache-menu > .ab-item 
 		{ background: #13a036; color: #fff; text-shadow:none; }
 	
 	#wpadminbar.nojs .ab-top-menu > li#wp-admin-bar-multi-cache-menu.menupop:hover > .ab-item,

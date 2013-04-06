@@ -17,19 +17,19 @@
 	 */
 	function multi_cache_start( $delete = true ) {
 	    
-		global $multi_cache_uri, $hc_file;
+		global $hyper_uri, $hc_file;
 				 
 	    if ( $delete && $hc_file != '' && is_file( $hc_file ) ) 
 			@unlink( $hc_file );
 		if ( !defined( 'MULTI_CACHE_DISABLE_WRITING' ) )
-			ob_start( 'multi_cache_callback' );    
+			ob_start( 'hyper_cache_callback' );    
 		
 	}		
 
 	// From here Wordpress starts to process the request
 	// Called whenever the page generation is ended
-	function multi_cache_callback( $buffer ) {
-	    global $multi_cache_charset, $hc_file, $multi_cache_name, $multi_cache_browsercache, $multi_cache_timeout, $multi_cache_lastmodified, $multi_cache_gzip, $multi_cache_gzip_on_the_fly;   
+	function hyper_cache_callback( $buffer ) {
+	    global $hyper_cache_charset, $hc_file, $hyper_cache_name, $hyper_cache_browsercache, $hyper_cache_timeout, $hyper_cache_lastmodified, $hyper_cache_gzip, $hyper_cache_gzip_on_the_fly;   
 
 	    if ( strpos( $buffer, '</body>' ) === false ) 
 			return $buffer;
@@ -40,25 +40,25 @@
 	    if ( strlen( $buffer ) == 0 ) 
 			return '';
 	
-	    if ( !$multi_cache_charset ) 
-			$multi_cache_charset = 'UTF-8';
+	    if ( !$hyper_cache_charset ) 
+			$hyper_cache_charset = 'UTF-8';
 	
-	    $buffer .= '<!-- hyper cache: ' . $multi_cache_name . ' ' . date('y-m-d h:i:s') .' -->';
+	    $buffer .= '<!-- hyper cache: ' . $hyper_cache_name . ' ' . date('y-m-d h:i:s') .' -->';
 	
 	    $data['html'] = $buffer;
 	
-	    multi_cache_write( $data );
+	    hyper_cache_write( $data );
 	
-	    if ( $multi_cache_browsercache ) {
-	        header( 'Cache-Control: max-age=' . $multi_cache_timeout );
-	        header( 'Expires: ' . gmdate( "D, d M Y H:i:s", time() + $multi_cache_timeout ) . " GMT" );
+	    if ( $hyper_cache_browsercache ) {
+	        header( 'Cache-Control: max-age=' . $hyper_cache_timeout );
+	        header( 'Expires: ' . gmdate( "D, d M Y H:i:s", time() + $hyper_cache_timeout ) . " GMT" );
 	    }
 	
 	    // True if user ask to NOT send Last-Modified
-	    if ( !$multi_cache_lastmodified )
+	    if ( !$hyper_cache_lastmodified )
 	        header( 'Last-Modified: ' . gmdate( "D, d M Y H:i:s", @filemtime( $hc_file ) ). " GMT" );
 	    
-	    if ( ( $multi_cache_gzip && !empty($data['gz'] ) ) || ( $multi_cache_gzip_on_the_fly && !empty( $data['html'] ) && function_exists(' gzencode' ) ) ) {
+	    if ( ( $hyper_cache_gzip && !empty($data['gz'] ) ) || ( $hyper_cache_gzip_on_the_fly && !empty( $data['html'] ) && function_exists(' gzencode' ) ) ) {
 	        header('Content-Encoding: gzip');
 	        header('Vary: Accept-Encoding');
 	        if ( empty( $data['gz'] ) ) {
@@ -73,13 +73,13 @@
 	/*
 	 * Writes the actual cache file
 	 */
-	function multi_cache_write( &$data ) {
-	    global $hc_file, $multi_cache_store_compressed;
+	function hyper_cache_write( &$data ) {
+	    global $hc_file, $hyper_cache_store_compressed;
 	
 	    $data['uri'] = $_SERVER['REQUEST_URI'];
 	
 	    // Look if we need the compressed version
-	    if ( $multi_cache_store_compressed && !empty( $data['html'] ) && function_exists( 'gzencode' ) ) {
+	    if ( $hyper_cache_store_compressed && !empty( $data['html'] ) && function_exists( 'gzencode' ) ) {
 	        $data['gz'] = gzencode( $data['html'] );
 	        if ( $data['gz'] ) 
 				unset( $data['html'] );
@@ -94,13 +94,13 @@
 	 * Check Mobile Type
 	 */
 	function hyper_mobile_type() {
-	    global $multi_cache_mobile, $multi_cache_mobile_agents;
+	    global $hyper_cache_mobile, $hyper_cache_mobile_agents;
 	
-	    if ( !isset( $multi_cache_mobile ) || $multi_cache_mobile_agents === false ) 
+	    if ( !isset( $hyper_cache_mobile ) || $hyper_cache_mobile_agents === false ) 
 			return '';
 	
 	    $hyper_agent = strtolower( $_SERVER['HTTP_USER_AGENT'] );
-	    foreach ( array($multi_cache_mobile_agents) as $hyper_a ) {
+	    foreach ( array($hyper_cache_mobile_agents) as $hyper_a ) {
 	        if ( strpos( $hyper_agent, $hyper_a ) !== false ) {
 	            if ( strpos( $hyper_agent, 'iphone' ) || strpos( $hyper_agent, 'ipod' ) ) {
 	                return 'iphone'; 
@@ -112,7 +112,7 @@
 	    return '';
 	}
 	
-	function multi_cache_gzdecode( $data ) {
+	function hyper_cache_gzdecode( $data ) {
 	
 	    $flags = ord(substr($data, 3, 1));
 	    $headerlen = 10;
@@ -138,10 +138,10 @@
 	    return $unpacked;
 	}
 	
-	function multi_cache_exit() {
-	    global $multi_cache_gzip_on_the_fly;
+	function hyper_cache_exit() {
+	    global $hyper_cache_gzip_on_the_fly;
 	
-	    if ( $multi_cache_gzip_on_the_fly && extension_loaded( 'zlib' ) ) 
+	    if ( $hyper_cache_gzip_on_the_fly && extension_loaded( 'zlib' ) ) 
 			ob_start( 'ob_gzhandler' );
 	    
 		return false;

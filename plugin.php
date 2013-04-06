@@ -601,54 +601,54 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 	    $buffer = "<?php\n";
 		
 		if ( is_multisite() )
-		    $buffer .= '$multi_cache_network_url = \'' . network_home_url() . '\'' . ";\n";
+		    $buffer .= '$hyper_cache_network_url = \'' . network_home_url() . '\'' . ";\n";
 
 		// path to cache files
-	    $buffer .= '$multi_cache_path = \'' . trailingslashit( MULTI_CACHE_DIR ) . '\'' . ";\n";
+	    $buffer .= '$hyper_cache_path = \'' . trailingslashit( MULTI_CACHE_DIR ) . '\'' . ";\n";
 	
-	    $buffer .= '$multi_cache_charset = "' . get_option('blog_charset') . '"' . ";\n";
+	    $buffer .= '$hyper_cache_charset = "' . get_option('blog_charset') . '"' . ";\n";
 	
 	    // Collect statistics
-	    //$buffer .= '$multi_cache_stats = ' . (isset($options['stats'])?'true':'false') . ";\n";
+	    //$buffer .= '$hyper_cache_stats = ' . (isset($options['stats'])?'true':'false') . ";\n";
 
 	    // Do not cache for commenters
-	   // $buffer .= '$multi_cache_blog_id = ' . $wpdb->blog_id . ";\n";
+	   // $buffer .= '$hyper_cache_blog_id = ' . $wpdb->blog_id . ";\n";
 	
 	    // Do not cache for commenters
-	    $buffer .= '$multi_cache_comment = ' . ( $options['comment'] == true ? 'true' : 'false' ) . ";\n";
+	    $buffer .= '$hyper_cache_comment = ' . ( $options['comment'] == true ? 'true' : 'false' ) . ";\n";
 	
 	    // Single page timeout
-	    $buffer .= '$multi_cache_timeout = ' . ( $timeout ) . ";\n";
+	    $buffer .= '$hyper_cache_timeout = ' . ( $timeout ) . ";\n";
 
 	    // Separate caching for mobile agents?
-	    $buffer .= '$multi_cache_mobile = ' . ( $options['mobile'] == true ?'true' : 'false' ) . ";\n";
+	    $buffer .= '$hyper_cache_mobile = ' . ( $options['mobile'] == true ?'true' : 'false' ) . ";\n";
 
 	    // Cache the feeds?
-	    $buffer .= '$multi_cache_feed = ' . ( $options['feed'] == true ? 'true' : 'false' ) . ";\n";
+	    $buffer .= '$hyper_cache_feed = ' . ( $options['feed'] == true ? 'true' : 'false' ) . ";\n";
 	
 	    // Disable last modified header
-	    $buffer .= '$multi_cache_lastmodified = ' . ( $options['lastmodified'] == true ? 'true' : 'false' ) . ";\n";
+	    $buffer .= '$hyper_cache_lastmodified = ' . ( $options['lastmodified'] == true ? 'true' : 'false' ) . ";\n";
 	
 	    // Allow browser caching?
-	    $buffer .= '$multi_cache_browsercache = ' . ( $options['browsercache'] == true ? 'true' : 'false' ) . ";\n";
+	    $buffer .= '$hyper_cache_browsercache = ' . ( $options['browsercache'] == true ? 'true' : 'false' ) . ";\n";
 	
 	    // Do not use cache if browser sends no-cache header?
-	    $buffer .= '$multi_cache_nocache = ' . ( $options['nocache'] == true ? 'true' : 'false' ) . ";\n";
+	    $buffer .= '$hyper_cache_nocache = ' . ( $options['nocache'] == true ? 'true' : 'false' ) . ";\n";
 	
 	    if ( $options['gzip'] ) 
 			$options['store_compressed'] = 1;
 	
-	    $buffer .= '$multi_cache_gzip = ' . ( $options['gzip'] == true ? 'true' : 'false' ) . ";\n";
+	    $buffer .= '$hyper_cache_gzip = ' . ( $options['gzip'] == true ? 'true' : 'false' ) . ";\n";
 	
-	    $buffer .= '$multi_cache_gzip_on_the_fly = ' . ( $options['gzip_on_the_fly'] == true ? 'true' : 'false' ) . ";\n";
+	    $buffer .= '$hyper_cache_gzip_on_the_fly = ' . ( $options['gzip_on_the_fly'] == true ? 'true' : 'false' ) . ";\n";
 	
-	    $buffer .= '$multi_cache_store_compressed = ' . ( $options['store_compressed'] == true ? 'true' : 'false' ) . ";\n";
+	    $buffer .= '$hyper_cache_store_compressed = ' . ( $options['store_compressed'] == true ? 'true' : 'false' ) . ";\n";
 		
 	    if ( isset( $options['reject'] ) && trim( $options['reject'] ) != '' ) {
 	
 	        $options['reject'] = str_replace( ' ' , "\n" , $options['reject'] );
 	        $options['reject'] = str_replace( "\r" , "\n" , $options['reject'] );
-	        $buffer .= '$multi_cache_reject = array(';
+	        $buffer .= '$hyper_cache_reject = array(';
 	        $reject = explode( "\n", $options['reject'] );
 	        $options['reject'] = '';
 	        foreach ( $reject as $uri ) {
@@ -661,13 +661,13 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 	        $buffer = rtrim( $buffer , ',' );
 	        $buffer .= ");\n";
 	    } else {
-	        $buffer .= '$multi_cache_reject = false;' . "\n";
+	        $buffer .= '$hyper_cache_reject = false;' . "\n";
 	    }
 	
 	    if ( isset( $options['reject_agents'] ) && trim( $options['reject_agents'] ) != '' ) {
 	        $options['reject_agents'] = str_replace( ' ' , "\n" , $options['reject_agents'] );
 	        $options['reject_agents'] = str_replace( "\r" , "\n" , $options['reject_agents'] );
-	        $buffer .= '$multi_cache_reject_agents = array(';
+	        $buffer .= '$hyper_cache_reject_agents = array(';
 	        $reject_agents = explode( "\n", $options['reject_agents'] );
 	        $options['reject_agents'] = '';
 	        foreach ( $reject_agents as $uri ) {
@@ -679,13 +679,13 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 	        $buffer = rtrim( $buffer , ',' );
 	        $buffer .= ");\n";
 	    } else {
-	        $buffer .= '$multi_cache_reject_agents = false;' . "\n";
+	        $buffer .= '$hyper_cache_reject_agents = false;' . "\n";
 	    }
 	
 	    if ( isset( $options['reject_cookies'] ) && trim( $options['reject_cookies'] ) != '' ) {
 	        $options['reject_cookies'] = str_replace( ' ' , "\n" , $options['reject_cookies'] );
 	        $options['reject_cookies'] = str_replace( "\r" , "\n" , $options['reject_cookies'] );
-	        $buffer .= '$multi_cache_reject_cookies = array(';
+	        $buffer .= '$hyper_cache_reject_cookies = array(';
 	        $reject_cookies = explode( "\n" , $options['reject_cookies'] );
 	        $options['reject_cookies'] = '';
 	        foreach ( $reject_cookies as $c ) {
@@ -697,7 +697,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 	        $buffer = rtrim( $buffer, ',' );
 	        $buffer .= ");\n";
 	    }  else {
-	        $buffer .= '$multi_cache_reject_cookies = false;' . "\n";
+	        $buffer .= '$hyper_cache_reject_cookies = false;' . "\n";
 	    }
 	
 	    if ( isset( $options['mobile'] ) ) {
@@ -708,7 +708,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 	        if ( trim( $options['mobile_agents'] ) != '' ) {
 	            $options['mobile_agents'] = str_replace( ',', "\n", $options['mobile_agents'] );
 	            $options['mobile_agents'] = str_replace( "\r", "\n", $options['mobile_agents'] );
-	            $buffer .= '$multi_cache_mobile_agents = array(';
+	            $buffer .= '$hyper_cache_mobile_agents = array(';
 	            $mobile_agents = explode( "\n", $options['mobile_agents'] );
 	            $options['mobile_agents'] = '';
 	            foreach ( $mobile_agents as $uri ) {
@@ -720,7 +720,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 	            $buffer = rtrim( $buffer, ',' );
 	            $buffer .= ");\n";
 	        } else {
-	            $buffer .= '$multi_cache_mobile_agents = false;' . "\n";
+	            $buffer .= '$hyper_cache_mobile_agents = false;' . "\n";
 	        }
 	    }
 	    

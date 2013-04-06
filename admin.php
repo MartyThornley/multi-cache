@@ -170,7 +170,7 @@
 		<table class="form-table">
 		<tr valign="top">
 		    <th><?php _e('Files in cache (valid and expired)', 'hyper-cache'); ?></th>
-		    <td><?php echo hyper_count(); ?></td>
+		    <td>Do we need this? How to do it safely?</td>
 		</tr>
 		<tr valign="top">
 		    <th><?php _e('Cleaning process', 'hyper-cache'); ?></th>

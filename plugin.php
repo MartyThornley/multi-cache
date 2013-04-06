@@ -51,15 +51,13 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 	define( 'MULTI_CACHE_PLUGIN_DIR' , 	dirname( __FILE__ ) );
 	define( 'MULTI_CACHE_PLUGIN_URL' ,	plugins_url( basename( dirname( __FILE__ ) ) ) );	
 	
-	$hyper_invalidated = false;
-	$hyper_invalidated_post_id = null;
-	
-
 	define( 'MULTI_CACHE_DIR' , 		WP_CONTENT_DIR . '/cache/mutli-cache' );
 	define( 'MULTI_CACHE_BLOGINFO' , 	trailingslashit( MULTI_CACHE_DIR ) . 'bloginfo' );
 	define( 'MULTI_CACHE_PAGE_CACHE' , 	trailingslashit( MULTI_CACHE_DIR ) . 'pages' );
 
 	define( 'MULTI_CACHE_CONFIG' , 		WP_CONTENT_DIR . '/advanced-cache.php' );
+
+	include_once( trailingslashit( MULTI_CACHE_PLUGIN_DIR ) . 'library/functions/shared-functions.php' );
 	
 	register_deactivation_hook( __FILE__ , 	'hyper_deactivate' );
 	
@@ -70,9 +68,10 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 	 */
 	function multi_cache_init() {
 		
-		multicache_initial_options();
+		multi_cache_initial_options();
 
-		add_action( 'wp_enqueue_scripts' , 	'multi_cache_enqueue' );
+		add_action( 'wp_enqueue_scripts' , 		'multi_cache_enqueue' );
+		add_action( 'admin_enqueue_scripts' , 	'multi_cache_enqueue' );
 		
 		add_action( 'hyper_clean' , 		'hyper_clean' );
 		add_action( 'switch_theme' , 		'multi_cache_delete_site' , 0 );
@@ -88,9 +87,9 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 			include( trailingslashit( MULTI_CACHE_PLUGIN_DIR ) . 'admin.php' );
 	
 			if ( is_multisite() )
-				add_action( 'network_admin_menu' , 		'hyper_admin_menu' );
+				add_action( 'network_admin_menu' , 		'multi_cache_admin_menu' );
 			else
-				add_action( 'admin_menu' , 		'hyper_admin_menu' );
+				add_action( 'admin_menu' , 		'multi_cache_admin_menu' );
 		
 		} else {
 		
@@ -100,7 +99,10 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 	}
 	
-	function multicache_initial_options() {
+	/*
+	 * Setup initial options so we have a starting point
+	 */
+	function multi_cache_initial_options() {
 
 		if ( !get_option( 'multi_cache_started' ) || !file_exists( MULTI_CACHE_CONFIG ) ) {
 		
@@ -139,7 +141,12 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 		
 		}
 	}
-
+	
+	/*
+	 * wrapper for getting options
+	 * 
+	 * for multisite will use site_options
+	 */
 	function multi_cache_options() {
 		if ( is_multisite() )
 			$multi_cache_options = get_site_option( 'multi_cache_options' );
@@ -148,7 +155,12 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 		
 		return $multi_cache_options;	
 	}
-	
+
+	/*
+	 * wrapper for updating options
+	 * 
+	 * for multisite will use site_options
+	 */	
 	function multi_cache_update_options( $multi_cache_options ) {
 		if ( is_multisite() )
 			update_site_option( 'multi_cache_options' , $multi_cache_options );
@@ -156,13 +168,21 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 			update_option( 'multi_cache_options' , $multi_cache_options );
 	}
 	
-	function hyper_admin_menu() {
+	/*
+	 * Add admin menus
+	 * 
+	 * for multisite, will add it to network admin
+	 */
+	function multi_cache_admin_menu() {
 		if ( is_multisite() ) 
 			add_submenu_page( 'settings.php', 'Multi Cache', 'Multi Cache', 'manage_options', 'multi_cache_admin' , 'multi_cache_admin' );
 		else
 	    	add_options_page( 'Multi Cache', 'Multi Cache', 'manage_options', 'multi_cache_admin' , 'multi_cache_admin' );
 	}
 
+	/*
+	 * Enqueue scripts and styles
+	 */
 	function multi_cache_enqueue(){
 		
 		wp_enqueue_style( 'multi-cache-style' , trailingslashit( MULTI_CACHE_PLUGIN_URL ) . 'library/css/style.css' );
@@ -170,7 +190,11 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 	}
 	
 	/*
- 	 * Delete single site's cache
+ 	 * Deletion of caches
+ 	 *
+	 * @param $args - array of options
+	 * should include type of cache to delete array( 'cache' => 'site' ); can be network, site, or post
+	 * If deleting a post, should include the $post_id array( 'cache' => 'post' , 'post' => $post_id ); 
  	 */
 	function multi_cache_delete( $args ) {
 		
@@ -187,6 +211,12 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 		
 		switch ( $args['cache'] ) {
 		
+			case 'network' :
+				
+				$cache_files[] = MULTI_CACHE_PAGE_CACHE;
+			
+			break;
+			
 			case 'site' :
 				
 				$cache_files[] = trailingslashit( MULTI_CACHE_PAGE_CACHE  ) . sprintf( "%09s", $wpdb->blogid );
@@ -209,7 +239,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 	
 			foreach( $cache_files as $cache_file ) {
 
-				if ( file_exists( $cache_file ) && is_dir( $cache_file ) && $cache_file != trailingslashit( MULTI_CACHE_PAGE_CACHE  ) ) {
+				if ( $cache_file != '' && file_exists( $cache_file ) && is_dir( $cache_file ) ) {
 					
 					multi_cache_delete_path( $cache_file );
 					
@@ -223,7 +253,16 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 	}
 	
 	/*
- 	 * Wrapper functio to delete single site's cache
+ 	 * Wrapper function to delete entire cache
+ 	 */
+	function multi_cache_delete_all() {
+		
+		multi_cache_delete( array( 'cache' => 'network' ) ); 
+		
+	}
+	
+	/*
+ 	 * Wrapper function to delete single site's cache
  	 */
 	function multi_cache_delete_site() {
 		
@@ -315,38 +354,8 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 		} 
 	}
 
-	/*
-	 * Use this to hash everything in case we want to change hash method
-	 */
-	function multi_cache_hash( $string ){
-		
-		return md5( $string );
-	
-	}
-	
-	// Counts the number of file in to the hyper cache directory to give an idea of
-	// the number of pages cached.
-	function hyper_count() {
-	    $count = 0;
-	 	
-		if ($handle = @opendir( MULTI_CACHE_DIR ) ) {
-	        while ( $file = readdir( $handle ) ) {
-	            if ( $file != '.' && $file != '..' ) {
-	                $count++;
-	            }
-	        }
-	        closedir( $handle );
-	    }
-	    return $count;
-	}
-	
 	function hyper_clean() {
-	    // Latest global invalidation (may be false)
-	    $invalidation_time = @filemtime( trailingslashit( MULTI_CACHE_DIR ) .'global.dat');
-	
-	    hyper_log( 'start cleaning' );
-	
-	    //$options = get_option('hyper');
+
 		$options = multi_cache_options();
 		
 	    $timeout = $options['timeout']*60;
@@ -360,7 +369,6 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 	    $handle = @opendir( $path );
 	
 	    if ( !$handle ) {
-	        hyper_log( 'unable to open cache dir' );
 	        return;
 	    }
 	
@@ -369,19 +377,15 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 			if ( $file == '.' || $file == '..' || $file[0] == '_' ) 
 				continue;
 	
-	        hyper_log( 'checking ' . $file . ' for cleaning' );
 	        $t = @filemtime($path . '/' . $file);
-	        hyper_log( 'file time ' . $t );
 	
 	        if ( $time - $t > $timeout || ( $invalidation_time && $t < $invalidation_time ) ) {
 	            @unlink( $path . '/' . $file );
-	            hyper_log( 'cleaned ' . $file );
 	        }
 	    }
 	
 	    closedir( $handle );
 	
-	    hyper_log( 'end cleaning' );
 	}
 	
 	function hyper_deactivate() {
@@ -396,22 +400,6 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 	
 		delete_option( 'multi_cache_started' );
 	
-	}
-		
-	function hyper_log($text) {
-		if ( MULTI_CACHE_DEBUG ) {
-			$file = fopen( MULTI_CACHE_DIR . '/log.txt' , 'a');
-			fwrite( $file , $text . "\n" );
-	    	fclose( $file );
-		}
-	}
-
-	function multi_cache_write( $file , $text ) {
-		if ( $file ) {
-			$file = fopen( $file , 'a');
-			fwrite( $file , $text . "\n" );
-	    	fclose( $file );
-		}
 	}
 	
 	/*

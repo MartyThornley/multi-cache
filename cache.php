@@ -5,6 +5,10 @@
  * Called by 'wp-content/advanced-cache.php'
  *
  * Must have define('WP_CACHE', true); in wp-config.php
+ *
+ *
+ * Some wp functions are available here but not all.
+ * We can use is_admin() , is_multisite() 
  */	
 
 	// just for testing, prevent cache from being written
@@ -12,13 +16,16 @@
 	
 	// should be added via config file based on options.
 	// will tell us to ignore logged in users and skip the cache
-	define( 'MULTI_CACHE_IGNORE_USERS' , true );
-	
+	define( 'MULTI_CACHE_IGNORE_USERS' , true );	
 	
 	// need to save this in config, with network_home_url()
 	define( 'MULTI_CACHE_BASE_URL' , 'localhost/_moviefuse/' );
 
+	if ( !defined( 'MULTI_CACHE_PLUGIN_DIR' ) ) 
+		define( 'MULTI_CACHE_PLUGIN_DIR' , 	dirname( __FILE__ ) );
 
+	include_once( MULTI_CACHE_PLUGIN_DIR . '/library/functions/shared-functions.php' );
+	
 	// need to check domain.com ( $_SERVER['HTTP_HOST'] ) and domain.com/something ( $_SERVER['REQUEST_URI'] )
 	
 	$protocol = isset( $_SERVER['HTTPS'] ) ? 'https://' : 'http://';
@@ -33,9 +40,11 @@
 	if ( is_array( $folders ) && isset( $folders[0] ) && $folders[0] != '' ) {
 	
 		$this_sub_directory = $folders[0];
+		
 	} elseif( is_array( $folders ) && isset( $folders[1] ) && $folders[1] != '' ) {
 	
 		$this_sub_directory = $folders[1];
+		
 	}
 	
 	$this_sub_directory = str_replace( '/' , '' , $this_sub_directory );
@@ -53,7 +62,7 @@
 	if ( $this_sub_directory != '' )
 		$first_letters[] = substr( $this_sub_directory , 0 , 1 );;
 	
-	if ( is_admin() )
+	if ( function_exists( 'is_admin' ) && is_admin() )
 		return hyper_cache_exit();
 	
 	// If no-cache header support is enabled and the browser explicitly requests a fresh page, do not cache
@@ -129,7 +138,7 @@
 	// Do not cache WP pages, even if those calls typically don't go throught this script
 	if ( strpos( $hyper_uri, '/wp-' ) !== false ) 
 		return hyper_cache_exit();
-		
+
 	// Multisite - skip files ??
 	if ( function_exists( 'is_multisite' ) && is_multisite() && strpos( $hyper_uri, '/files/' ) !== false ) 
 		return hyper_cache_exit();
@@ -199,16 +208,14 @@
 	// add 9 digits to allow for huge sites
 	$cache_dir = $hyper_cache_path .'pages/'. sprintf("%09s", $blog_id);
 	
-
 	if ( !file_exists( $hyper_cache_path .'pages/' ) )
 		mkdir( $hyper_cache_path .'pages/' );
 		
-
 	if ( !file_exists( $cache_dir ) )
 		mkdir( $cache_dir );
 	
 	// The name of the file with html and other data	
-	$hyper_cache_name = md5( $hyper_uri );
+	$hyper_cache_name = multi_cache_hash( $hyper_uri );
 
 	//print '<pre>'; print_r($hyper_uri); print '</pre>'; 
 
@@ -216,7 +223,7 @@
 	$hc_file = $cache_dir .'/'. $hyper_cache_name . hyper_mobile_type() . '.dat';
 
 	if ( !file_exists( $hc_file ) ) {
-	    hyper_cache_start( false );
+	    multi_cache_start( false );
 	    return;
 	}
 	// check file time and age
@@ -225,7 +232,7 @@
 	
 	// if it is too old, create a new one
 	if ( $hc_file_age > $hyper_cache_timeout ) {
-	    hyper_cache_start();
+	    multi_cache_start();
 	    return;
 	}
 
@@ -242,7 +249,7 @@
 	$hyper_data = @unserialize( file_get_contents( $hc_file ) );
 	
 	if ( !$hyper_data ) {
-	    hyper_cache_start();
+	    multi_cache_start();
 	    return;
 	}
 
@@ -316,140 +323,6 @@
 	        return false;
 	    }
 	}
+	
 	flush();
 	die();
-	
-	/*
-	 * Start the caching process
-	 */
-	function hyper_cache_start( $delete = true ) {
-	    
-		global $hyper_uri, $hc_file;
-				 
-	    if ( $delete && $hc_file != '' && is_file( $hc_file ) ) 
-			@unlink( $hc_file );
-		if ( !defined( 'MULTI_CACHE_DISABLE_WRITING' ) )
-			ob_start( 'hyper_cache_callback' );    
-		
-	}
-	
-	// From here Wordpress starts to process the request
-	// Called whenever the page generation is ended
-	function hyper_cache_callback( $buffer ) {
-	    global $hyper_cache_charset, $hc_file, $hyper_cache_name, $hyper_cache_browsercache, $hyper_cache_timeout, $hyper_cache_lastmodified, $hyper_cache_gzip, $hyper_cache_gzip_on_the_fly;   
-
-	    if ( strpos( $buffer, '</body>' ) === false ) 
-			return $buffer;
-	
-		$buffer = trim( $buffer );
-	
-	    // Can be a trackback or other things without a body. We do not cache them, WP needs to get those calls.
-	    if ( strlen( $buffer ) == 0 ) 
-			return '';
-	
-	    if ( !$hyper_cache_charset ) 
-			$hyper_cache_charset = 'UTF-8';
-	
-	    $buffer .= '<!-- hyper cache: ' . $hyper_cache_name . ' ' . date('y-m-d h:i:s') .' -->';
-	
-	    $data['html'] = $buffer;
-	
-	    hyper_cache_write( $data );
-	
-	    if ( $hyper_cache_browsercache ) {
-	        header( 'Cache-Control: max-age=' . $hyper_cache_timeout );
-	        header( 'Expires: ' . gmdate( "D, d M Y H:i:s", time() + $hyper_cache_timeout ) . " GMT" );
-	    }
-	
-	    // True if user ask to NOT send Last-Modified
-	    if ( !$hyper_cache_lastmodified )
-	        header( 'Last-Modified: ' . gmdate( "D, d M Y H:i:s", @filemtime( $hc_file ) ). " GMT" );
-	    
-	    if ( ( $hyper_cache_gzip && !empty($data['gz'] ) ) || ( $hyper_cache_gzip_on_the_fly && !empty( $data['html'] ) && function_exists(' gzencode' ) ) ) {
-	        header('Content-Encoding: gzip');
-	        header('Vary: Accept-Encoding');
-	        if ( empty( $data['gz'] ) ) {
-	            $data['gz'] = gzencode( $data['html'] );
-	        }
-	        return $data['gz'];
-	    }
-	
-	    return $buffer;
-	}
-	
-	/*
-	 * Writes the actual cache file
-	 */
-	function hyper_cache_write( &$data ) {
-	    global $hc_file, $hyper_cache_store_compressed;
-	
-	    $data['uri'] = $_SERVER['REQUEST_URI'];
-	
-	    // Look if we need the compressed version
-	    if ( $hyper_cache_store_compressed && !empty( $data['html'] ) && function_exists( 'gzencode' ) ) {
-	        $data['gz'] = gzencode( $data['html'] );
-	        if ( $data['gz'] ) 
-				unset( $data['html'] );
-	    }
-	
-	    $file = fopen( $hc_file, 'w' );
-	    fwrite( $file, serialize( $data ) );
-	    fclose( $file );
-	}
-	
-	/*
-	 * Check Mobile Type
-	 */
-	function hyper_mobile_type() {
-	    global $hyper_cache_mobile, $hyper_cache_mobile_agents;
-	
-	    if ( !isset( $hyper_cache_mobile ) || $hyper_cache_mobile_agents === false ) 
-			return '';
-	
-	    $hyper_agent = strtolower( $_SERVER['HTTP_USER_AGENT'] );
-	    foreach ( array($hyper_cache_mobile_agents) as $hyper_a ) {
-	        if ( strpos( $hyper_agent, $hyper_a ) !== false ) {
-	            if ( strpos( $hyper_agent, 'iphone' ) || strpos( $hyper_agent, 'ipod' ) ) {
-	                return 'iphone'; 
-	            } else {
-	                return 'pda';
-	            }
-	        }
-	    }
-	    return '';
-	}
-	
-	function hyper_cache_gzdecode( $data ) {
-	
-	    $flags = ord(substr($data, 3, 1));
-	    $headerlen = 10;
-	    $extralen = 0;
-	
-	    $filenamelen = 0;
-	    if ($flags & 4) {
-	        $extralen = unpack('v' ,substr($data, 10, 2));
-	
-	        $extralen = $extralen[1];
-	        $headerlen += 2 + $extralen;
-	    }
-	    if ($flags & 8) // Filename
-	
-	        $headerlen = strpos($data, chr(0), $headerlen) + 1;
-	    if ($flags & 16) // Comment
-	
-	        $headerlen = strpos($data, chr(0), $headerlen) + 1;
-	    if ($flags & 2) // CRC at end of file
-	
-	        $headerlen += 2;
-	    $unpacked = gzinflate(substr($data, $headerlen));
-	    return $unpacked;
-	}
-	
-	function hyper_cache_exit() {
-	    global $hyper_cache_gzip_on_the_fly;
-	
-	    if ( $hyper_cache_gzip_on_the_fly && extension_loaded( 'zlib' ) ) 
-			ob_start( 'ob_gzhandler' );
-	    
-		return false;
-	}

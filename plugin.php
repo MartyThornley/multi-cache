@@ -75,7 +75,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 		add_action( 'wp_enqueue_scripts' , 	'multi_cache_enqueue' );
 		
 		add_action( 'hyper_clean' , 		'hyper_clean' );
-		add_action( 'switch_theme' , 		'hyper_cache_invalidate' , 0 );
+		add_action( 'switch_theme' , 		'multi_cache_delete_site' , 0 );
 				
 		add_action( 'save_post' , 			'multi_cache_delete_post' );
 		add_action( 'publish_post' , 		'multi_cache_delete_post' );
@@ -169,45 +169,102 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 	
 	}
 	
-	// Completely invalidate the cache. The hyper-cache directory is renamed
-	// with a random name and re-created to be immediately available to the cache
-	// system. Then the renamed directory is removed.
-	// If the cache has been already invalidated, the function doesn't anything.
-	function hyper_cache_invalidate() {
+	/*
+ 	 * Delete single site's cache
+ 	 */
+	function multi_cache_delete( $args ) {
 		
 		global $wpdb;
 		
-		$cache_dir = trailingslashit( MULTI_CACHE_PAGE_CACHE  ) . sprintf( "%09s", $wpdb->blogid );
+		$defaults = array(
+			'cache' => 'site', 	// site, network, post
+			'post'	=> '',		// should be id of post
+		);
 		
-		if ( file_exists( $cache_dir ) && is_dir( $cache_dir ) && $cache_dir != trailingslashit( MULTI_CACHE_PAGE_CACHE  ) )
-			hyper_delete_path( $cache_dir );
+		$args = wp_parse_args( $args, $defaults );
+		
+		$cache_files = array();
+		
+		switch ( $args['cache'] ) {
+		
+			case 'site' :
+				
+				$cache_files[] = trailingslashit( MULTI_CACHE_PAGE_CACHE  ) . sprintf( "%09s", $wpdb->blogid );
+			
+			break;
+			
+			case 'post' :
+				
+				if ( isset( $args['post'] ) ) {
+				
+					$cache_files = array_merge( $cache_files , multi_cache_get_post_files( $post_id ) );	
+		
+				}
+				
+			break;
+		
+		}
+
+		if ( is_array( $cache_files ) ) {		
+	
+			foreach( $cache_files as $cache_file ) {
+
+				if ( file_exists( $cache_file ) && is_dir( $cache_file ) && $cache_file != trailingslashit( MULTI_CACHE_PAGE_CACHE  ) ) {
+					
+					multi_cache_delete_path( $cache_file );
+					
+				} elseif ( $cache_file != '' && file_exists( $cache_file ) && !is_dir( $cache_file ) )  {
+				
+					@unlink( $cache_file );
+					
+				}
+			}
+		}
+	}
+	
+	/*
+ 	 * Wrapper functio to delete single site's cache
+ 	 */
+	function multi_cache_delete_site() {
+		
+		multi_cache_delete( array( 'cache' => 'site' ) ); 
 	}
 	
 	/**
-	 * Invalidates a single post and eventually the home and archives if
+	 * Deletes a single post and eventually the home and archives if
 	 * required.
 	 */
 	function multi_cache_delete_post( $post_id ) {
 			
 		global $wpdb;
 		
-		if ( defined('DOING_AUTOSAVE') && DOING_AUTOSAVE ) 
+		if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) 
     		return $post_id;
 
-		// delete the page/post itself
+		multi_cache_delete( array( 'cache' => 'post' , 'post' => $post_id ) ); 
+		
+	}
+
+	/**
+	 * Finds all possible urls that clearing a post cache should delete
+	 * 
+	 * Should able to possibly find taxonomies, home page, posts pages, anything a changed post may effect
+	 *
+	 * returns an array of hashed urls.
+	 */
+	function multi_cache_get_post_files( $post_id ) {
+			
+		global $wpdb;
+
+		$cache_files = array();
+		
+		// get the page/post itself
 		$ids[] = $_POST['post_ID'];
 		
-		// update home or front page
-		$ids[] = get_option('page_on_front');		
-
-		// should also delete blog pages, home page and archives
+		// get home or front page
+		$ids[] = get_option('page_on_front');
 		
-		//print '<pre>'; print_r($ids); print '</pre>'; 
-		
-		
-		// should rename cache files as 
-		// archive-ksdhbcjhqbcjhqbfjvhbleqfv.dat
-		// home-sljhdbvaljkhbvljhbvjlhbqv.dat
+		// should we find taxonomies, etc...		
 		
 		foreach( $ids as $id ) {
 			
@@ -216,23 +273,24 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 			 	$link = get_permalink( $id );
 			 	$link = preg_replace( '~^.*?://~', '', $link );
 			
-			 	$file = md5( $link ) .'.dat';
+			 	$file = multi_cache_hash( $link ) .'.dat';
 				
-				$cache_dir = trailingslashit( MULTI_CACHE_PAGE_CACHE  ) . sprintf( "%09s", $wpdb->blogid );
+				$cache_file = trailingslashit( MULTI_CACHE_PAGE_CACHE  ) . sprintf( "%09s", $wpdb->blogid );
 			
-			    if ( file_exists( $cache_dir . '/' . $file ) && !is_dir( $cache_dir . '/' . $file ) ) {
-					unlink( $cache_dir . '/' . $file );
+			    if ( $cache_file != '' && file_exists( $cache_file ) && !is_dir( $cache_file ) ) {
+					$cache_files[] = $cache_file;
 				}
 				
 			}
 		
 		}
 		
+		return $cache_files;
+		
 	}
 	
-	
 	// Completely remove a directory and it's content.
-	function hyper_delete_path( $dir ) {
+	function multi_cache_delete_path( $dir ) {
 		
 		if ( !is_dir( $dir ) || empty( $dir ) )
 			return;
@@ -245,7 +303,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 			foreach ( $objects as $object ) { 
 				if ( $object != "." && $object != ".." ) { 
 					if ( filetype( $dir . '/' . $object ) == 'dir') 
-						hyper_delete_path( $dir . '/' . $object ); 
+						multi_cache_delete_path( $dir . '/' . $object ); 
 					else 
 						@unlink( $dir . '/' . $object ); 
 				} 
@@ -253,6 +311,15 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 	    	reset( $objects ); 
 	    	@rmdir( $dir ); 
 		} 
+	}
+
+	/*
+	 * Use this to hash everything in case we want to change hash method
+	 */
+	function multi_cache_hash( $string ){
+		
+		return md5( $string );
+	
 	}
 	
 	// Counts the number of file in to the hyper cache directory to give an idea of
@@ -323,7 +390,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 			unlink( MULTI_CACHE_CONFIG );
 		
 		if ( file_exists( MULTI_CACHE_DIR ) )
-			hyper_delete_path( MULTI_CACHE_DIR );
+			multi_cache_delete_path( MULTI_CACHE_DIR );
 	
 		delete_option( 'multi_cache_started' );
 	

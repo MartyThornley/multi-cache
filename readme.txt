@@ -57,14 +57,3 @@ This makes seacrhing through the cache and deleting the cache much faster too.
 
 filenames are hashes of the current url and end up with a .dat extension
 
-== TODO ==
-
-Admin users of each blog need to be able to delete their own cache
-
-Add better auto-cache clearing of home and blog (posts) pages when posts are saved. Maybe archives that are attached to the post as well?
-
-Maybe store some areas with more specific names, like home-{hashedurl}.dat
-
-Deactivation - plugin should delete the cache folders and leave advanced-cache.php empty ( I believe this is already working - may need a better way to delete the cache if it is huge? )
-
-Better renaming of functions and files. Need to get rid of all the hyper-cache references and use consistent names.

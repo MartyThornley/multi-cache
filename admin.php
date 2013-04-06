@@ -17,7 +17,7 @@
 			
 			// delete cache for site when saving from multisite
 			if ( isset( $_POST['multi_cache_site_clean'] ) ) {
-			    hyper_delete_path( MULTI_CACHE_DIR );
+			    multi_cache_delete_path( MULTI_CACHE_DIR );
 			}
 			
 			
@@ -26,7 +26,7 @@
 			if ( isset( $posted ) && is_array( $posted ) ) {
 				
 			    if ( $multi_cache_options['gzip'] !== esc_html( $posted['gzip'] ) ) {
-			        hyper_delete_path( MULTI_CACHE_DIR );
+			        multi_cache_delete_path( MULTI_CACHE_DIR );
 			    }
 		
 				if ( isset( $posted['timeout'] ) ) 

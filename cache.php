@@ -87,7 +87,7 @@
 		return multi_cache_exit();
 	
 	// If no-cache header support is enabled and the browser explicitly requests a fresh page, do not cache
-	if ( $hyper_cache_nocache && ( ( !empty($_SERVER['HTTP_CACHE_CONTROL']) && $_SERVER['HTTP_CACHE_CONTROL'] == 'no-cache' ) || ( !empty($_SERVER['HTTP_PRAGMA']) && $_SERVER['HTTP_PRAGMA'] == 'no-cache')  ) ) 
+	if ( $multi_cache_nocache && ( ( !empty($_SERVER['HTTP_CACHE_CONTROL']) && $_SERVER['HTTP_CACHE_CONTROL'] == 'no-cache' ) || ( !empty($_SERVER['HTTP_PRAGMA']) && $_SERVER['HTTP_PRAGMA'] == 'no-cache')  ) ) 
 		return multi_cache_exit();
 	
 	// Do not cache post request (comments, plugins and so on)
@@ -103,8 +103,8 @@
 		return multi_cache_exit();
 
 	// Checks for rejected urls
-	if ( $hyper_cache_reject !== false ) {
-	    foreach ( $hyper_cache_reject as $uri ) {
+	if ( $multi_cache_reject !== false ) {
+	    foreach ( $multi_cache_reject as $uri ) {
 			
 			// finds exact url
 	        if ( substr($uri, 0, 1) == '"') {
@@ -119,17 +119,17 @@
 	}
 
 	// do not cache selected user agents	
-	if ( $hyper_cache_reject_agents !== false ) {
+	if ( $multi_cache_reject_agents !== false ) {
 	    $hyper_agent = strtolower( $_SERVER['HTTP_USER_AGENT'] );
-	    foreach ( $hyper_cache_reject_agents as $hyper_a ) {
+	    foreach ( $multi_cache_reject_agents as $hyper_a ) {
 	        if ( strpos( $hyper_agent, $hyper_a ) !== false ) 
 				return multi_cache_exit();
 	    }
 	}
 	
 	// Do nested cycles in this order, usually no cookies are specified
-	if ( $hyper_cache_reject_cookies !== false ) {
-	    foreach ( $hyper_cache_reject_cookies as $hyper_c ) {
+	if ( $multi_cache_reject_cookies !== false ) {
+	    foreach ( $multi_cache_reject_cookies as $hyper_c ) {
 	        foreach ( $_COOKIE as $n=>$v ) {
 	            if ( substr( $n, 0, strlen( $hyper_c ) ) == $hyper_c ) 
 					return multi_cache_exit();
@@ -142,7 +142,7 @@
 		foreach ( $_COOKIE as $n=>$v ) {
 		
 			// If it's required to bypass the cache when the visitor is a commenter, stop.
-		    if ( $hyper_cache_comment && substr( $n, 0, 15 ) == 'comment_author_' ) 
+		    if ( $multi_cache_comment && substr( $n, 0, 15 ) == 'comment_author_' ) 
 				return multi_cache_exit();
 		
 		    // This test cookie makes to cache not work!!!
@@ -193,7 +193,7 @@
 	
 	foreach( $first_letters as $key => $first_letter ) {
 		
-		$file =  $hyper_cache_path . 'bloginfo/' . $first_letter.'.php';
+		$file =  $multi_cache_path . 'bloginfo/' . $first_letter.'.php';
 		if ( file_exists( $file ) ){
 		
 			$data_orig = file_get_contents( $file );
@@ -255,16 +255,16 @@
 
 	
 	// add 9 digits to allow for huge sites
-	$cache_dir = $hyper_cache_path .'pages/'. sprintf("%09s", $blog_id);
+	$cache_dir = $multi_cache_path .'pages/'. sprintf("%09s", $blog_id);
 	
-	if ( !file_exists( $hyper_cache_path .'pages/' ) )
-		mkdir( $hyper_cache_path .'pages/' );
+	if ( !file_exists( $multi_cache_path .'pages/' ) )
+		mkdir( $multi_cache_path .'pages/' );
 		
 	if ( !file_exists( $cache_dir ) )
 		mkdir( $cache_dir );
 	
-	$hyper_cache_name = multi_cache_hash( $hyper_uri );
-	$hc_file = $cache_dir .'/'. $hyper_cache_name . hyper_mobile_type() . '.dat';
+	$multi_cache_name = multi_cache_hash( $hyper_uri );
+	$hc_file = $cache_dir .'/'. $multi_cache_name . hyper_mobile_type() . '.dat';
 	
 	/*
 	 * We have our correct file name - does it exist?
@@ -292,7 +292,7 @@
 	$hc_file_age = time() - $hc_file_time;
 	
 	// if it is too old, create a new one
-	if ( $hc_file_age > $hyper_cache_timeout ) {
+	if ( $hc_file_age > $multi_cache_timeout ) {
 	    multi_cache_start();
 	    return;
 	}
@@ -334,7 +334,7 @@
 
 	
 	// True if browser caching NOT enabled (default)
-	if ( !$hyper_cache_browsercache ) {
+	if ( !$multi_cache_browsercache ) {
 	    
 	    header('Cache-Control: no-cache, must-revalidate, max-age=0');
 	    header('Pragma: no-cache');
@@ -342,13 +342,13 @@
 	
 	} else {
 	
-	    $maxage = $hyper_cache_timeout - $hc_file_age;
+	    $maxage = $multi_cache_timeout - $hc_file_age;
 	    header('Cache-Control: max-age=' . $maxage);
 	    header('Expires: ' . gmdate("D, d M Y H:i:s", time() + $maxage) . " GMT");
 	}
 	
 	// True if user ask to NOT send Last-Modified
-	if ( !$hyper_cache_lastmodified ) {
+	if ( !$multi_cache_lastmodified ) {
 	    header('Last-Modified: ' . gmdate("D, d M Y H:i:s", $hc_file_time). " GMT");
 	}
 	
@@ -358,7 +358,7 @@
 	
 	// Send the cached html
 	if ( isset( $_SERVER['HTTP_ACCEPT_ENCODING'] ) && strpos( $_SERVER['HTTP_ACCEPT_ENCODING'] , 'gzip' ) !== false &&
-	    ( ( $hyper_cache_gzip && !empty( $hyper_data['gz'] ) ) || ( $hyper_cache_gzip_on_the_fly && function_exists( 'gzencode' ) ) ) ) {
+	    ( ( $multi_cache_gzip && !empty( $hyper_data['gz'] ) ) || ( $multi_cache_gzip_on_the_fly && function_exists( 'gzencode' ) ) ) ) {
 	
 	    header( 'Content-Encoding: gzip' );
 	    header( 'Vary: Accept-Encoding' );
@@ -380,7 +380,7 @@
 	    
 		} elseif ( function_exists( 'gzinflate' ) ) {
 	     
-	   		$buffer = hyper_cache_gzdecode( $hyper_data['gz'] );
+	   		$buffer = multi_cache_gzdecode( $hyper_data['gz'] );
 	        if ( $buffer === false ) 
 				echo 'Error retrieving the content';
 	        else 

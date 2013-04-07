@@ -17,7 +17,7 @@
 	 */
 	function multi_cache_start( $delete = true ) {
 	    
-		global $hyper_uri, $hc_file;
+		global $multi_cache_uri, $hc_file;
 				 
 	    if ( $delete && $hc_file != '' && is_file( $hc_file ) ) 
 			@unlink( $hc_file );
@@ -93,16 +93,16 @@
 	/*
 	 * Check Mobile Type
 	 */
-	function hyper_mobile_type() {
+	function multi_cache_mobile_type() {
 	    global $multi_cache_mobile, $multi_cache_mobile_agents;
 	
 	    if ( !isset( $multi_cache_mobile ) || $multi_cache_mobile_agents === false ) 
 			return '';
 	
-	    $hyper_agent = strtolower( $_SERVER['HTTP_USER_AGENT'] );
-	    foreach ( array($multi_cache_mobile_agents) as $hyper_a ) {
-	        if ( strpos( $hyper_agent, $hyper_a ) !== false ) {
-	            if ( strpos( $hyper_agent, 'iphone' ) || strpos( $hyper_agent, 'ipod' ) ) {
+	    $multi_cache_agent = strtolower( $_SERVER['HTTP_USER_AGENT'] );
+	    foreach ( array($multi_cache_mobile_agents) as $multi_cache_a ) {
+	        if ( strpos( $multi_cache_agent, $multi_cache_a ) !== false ) {
+	            if ( strpos( $multi_cache_agent, 'iphone' ) || strpos( $multi_cache_agent, 'ipod' ) ) {
 	                return 'iphone'; 
 	            } else {
 	                return 'pda';

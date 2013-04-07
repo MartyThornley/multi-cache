@@ -59,7 +59,7 @@
 
 	$urls['sub_directory'] = MULTI_CACHE_BASE_URL . $this_sub_directory;
 
-	$hyper_uri = $_SERVER['REQUEST_URI'];
+	$multi_cache_uri = $_SERVER['REQUEST_URI'];
 	
 	$base_domain = str_replace( 'https://' , '' , $urls['base_url'] );
 	$base_domain = str_replace( 'http://' , '' , $base_domain  );	
@@ -99,7 +99,7 @@
 		return multi_cache_exit();
 	
 	// don't cache robots.txt
-	if ( strpos( $hyper_uri, 'robots.txt' ) !== false ) 
+	if ( strpos( $multi_cache_uri, 'robots.txt' ) !== false ) 
 		return multi_cache_exit();
 
 	// Checks for rejected urls
@@ -108,30 +108,30 @@
 			
 			// finds exact url
 	        if ( substr($uri, 0, 1) == '"') {
-	            if ( $uri == '"' . $hyper_uri . '"' ) 
+	            if ( $uri == '"' . $multi_cache_uri . '"' ) 
 					return multi_cache_exit();
 	        }
 			
 			// finds start of string - /blogs will skip /blogsite
-	        if ( substr( $hyper_uri , 0 , strlen( $uri ) ) == $uri ) 
+	        if ( substr( $multi_cache_uri , 0 , strlen( $uri ) ) == $uri ) 
 				return multi_cache_exit();
 	    }
 	}
 
 	// do not cache selected user agents	
 	if ( $multi_cache_reject_agents !== false ) {
-	    $hyper_agent = strtolower( $_SERVER['HTTP_USER_AGENT'] );
-	    foreach ( $multi_cache_reject_agents as $hyper_a ) {
-	        if ( strpos( $hyper_agent, $hyper_a ) !== false ) 
+	    $multi_cache_agent = strtolower( $_SERVER['HTTP_USER_AGENT'] );
+	    foreach ( $multi_cache_reject_agents as $multi_cache_a ) {
+	        if ( strpos( $multi_cache_agent, $multi_cache_a ) !== false ) 
 				return multi_cache_exit();
 	    }
 	}
 	
 	// Do nested cycles in this order, usually no cookies are specified
 	if ( $multi_cache_reject_cookies !== false ) {
-	    foreach ( $multi_cache_reject_cookies as $hyper_c ) {
+	    foreach ( $multi_cache_reject_cookies as $multi_cache_c ) {
 	        foreach ( $_COOKIE as $n=>$v ) {
-	            if ( substr( $n, 0, strlen( $hyper_c ) ) == $hyper_c ) 
+	            if ( substr( $n, 0, strlen( $multi_cache_c ) ) == $multi_cache_c ) 
 					return multi_cache_exit();
 	        }
 	    }
@@ -157,11 +157,11 @@
 	}
 
 	// Do not cache WP pages, even if those calls typically don't go throught this script
-	if ( strpos( $hyper_uri, '/wp-' ) !== false ) 
+	if ( strpos( $multi_cache_uri, '/wp-' ) !== false ) 
 		return multi_cache_exit();
 
 	// Multisite - skip files ??
-	if ( function_exists( 'is_multisite' ) && is_multisite() && strpos( $hyper_uri, '/files/' ) !== false ) 
+	if ( function_exists( 'is_multisite' ) && is_multisite() && strpos( $multi_cache_uri, '/files/' ) !== false ) 
 		return multi_cache_exit();
 	
 	/** END TESTS **********************************/
@@ -177,7 +177,7 @@
 
 	
 	// Prefix host, and for wordpress 'pretty URLs' strip trailing slash (e.g. '/my-post/' -> 'my-site.com/my-post')
-	$hyper_uri = $_SERVER['HTTP_HOST'] . $hyper_uri;
+	$multi_cache_uri = $_SERVER['HTTP_HOST'] . $multi_cache_uri;
 	
 	
 	if ( !is_array( $first_letters ) )
@@ -263,8 +263,8 @@
 	if ( !file_exists( $cache_dir ) )
 		mkdir( $cache_dir );
 	
-	$multi_cache_name = multi_cache_hash( $hyper_uri );
-	$hc_file = $cache_dir .'/'. $multi_cache_name . hyper_mobile_type() . '.dat';
+	$multi_cache_name = multi_cache_hash( $multi_cache_uri );
+	$hc_file = $cache_dir .'/'. $multi_cache_name . multi_cache_mobile_type() . '.dat';
 	
 	/*
 	 * We have our correct file name - does it exist?
@@ -307,15 +307,15 @@
 	}
 	
 	// Load it and check is it's still valid
-	$hyper_data = @unserialize( file_get_contents( $hc_file ) );
+	$multi_cache_data = @unserialize( file_get_contents( $hc_file ) );
 	
-	if ( !$hyper_data ) {
+	if ( !$multi_cache_data ) {
 	    multi_cache_start();
 	    return;
 	}
 
-	if ( !empty($hyper_data['location'] ) ) {
-	    header( 'Location: ' . $hyper_data['location'] );
+	if ( !empty($multi_cache_data['location'] ) ) {
+	    header( 'Location: ' . $multi_cache_data['location'] );
 	    flush();
 	    die();
 	}
@@ -352,35 +352,35 @@
 	    header('Last-Modified: ' . gmdate("D, d M Y H:i:s", $hc_file_time). " GMT");
 	}
 	
-	header( 'Content-Type: ' . $hyper_data['mime'] );
+	header( 'Content-Type: ' . $multi_cache_data['mime'] );
 	
-	if ( isset($hyper_data['status'] ) && $hyper_data['status'] == 404 ) header( $_SERVER['SERVER_PROTOCOL'] . " 404 Not Found" );
+	if ( isset($multi_cache_data['status'] ) && $multi_cache_data['status'] == 404 ) header( $_SERVER['SERVER_PROTOCOL'] . " 404 Not Found" );
 	
 	// Send the cached html
 	if ( isset( $_SERVER['HTTP_ACCEPT_ENCODING'] ) && strpos( $_SERVER['HTTP_ACCEPT_ENCODING'] , 'gzip' ) !== false &&
-	    ( ( $multi_cache_gzip && !empty( $hyper_data['gz'] ) ) || ( $multi_cache_gzip_on_the_fly && function_exists( 'gzencode' ) ) ) ) {
+	    ( ( $multi_cache_gzip && !empty( $multi_cache_data['gz'] ) ) || ( $multi_cache_gzip_on_the_fly && function_exists( 'gzencode' ) ) ) ) {
 	
 	    header( 'Content-Encoding: gzip' );
 	    header( 'Vary: Accept-Encoding' );
 	
-	    if ( !empty( $hyper_data['gz'] ) ) {
-	        echo $hyper_data['gz'];
+	    if ( !empty( $multi_cache_data['gz'] ) ) {
+	        echo $multi_cache_data['gz'];
 	    } else {
-	        echo gzencode( $hyper_data['html'] );
+	        echo gzencode( $multi_cache_data['html'] );
 	    }
 	
 	// No compression accepted, check if we have the plain html or
 	// decompress the compressed one.
 	} else {
 
-	    if ( !empty($hyper_data['html'] ) ) {
+	    if ( !empty($multi_cache_data['html'] ) ) {
 	    
-			//header('Content-Length: ' . strlen($hyper_data['html']));
-	        echo $hyper_data['html'];
+			//header('Content-Length: ' . strlen($multi_cache_data['html']));
+	        echo $multi_cache_data['html'];
 	    
 		} elseif ( function_exists( 'gzinflate' ) ) {
 	     
-	   		$buffer = multi_cache_gzdecode( $hyper_data['gz'] );
+	   		$buffer = multi_cache_gzdecode( $multi_cache_data['gz'] );
 	        if ( $buffer === false ) 
 				echo 'Error retrieving the content';
 	        else 

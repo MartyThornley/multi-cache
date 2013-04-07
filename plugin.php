@@ -12,7 +12,7 @@ Disclaimer: Use at your own risk. No warranty expressed or implied is provided.
 Copyright 2011  Satollo  (email : info@satollo.net)
 
 based on - Hyper Cache by Stefano Lissa
-http://www.satollo.net/plugins/hyper-cache
+http://www.satollo.net/plugins/multi-cache
 http://www.satollo.net
 
 This program is free software; you can redistribute it and/or modify
@@ -59,7 +59,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 	include_once( trailingslashit( MULTI_CACHE_PLUGIN_DIR ) . 'library/functions/shared-functions.php' );
 	
-	register_deactivation_hook( __FILE__ , 	'hyper_deactivate' );
+	register_deactivation_hook( __FILE__ , 	'multi_cache_deactivate' );
 	
 	add_action( 'init' , 			'multi_cache_init' );
 	
@@ -73,7 +73,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 		add_action( 'wp_enqueue_scripts' , 		'multi_cache_enqueue' );
 		add_action( 'admin_enqueue_scripts' , 	'multi_cache_enqueue' );
 		
-		add_action( 'hyper_clean' , 		'hyper_clean' );
+		add_action( 'multi_cache_clean' , 		'multi_cache_clean' );
 		add_action( 'switch_theme' , 		'multi_cache_delete_site' , 0 );
 				
 		add_action( 'save_post' , 			'multi_cache_delete_post' );
@@ -354,7 +354,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 		} 
 	}
 
-	function hyper_clean() {
+	function multi_cache_clean() {
 
 		$options = multi_cache_options();
 		
@@ -388,9 +388,9 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 	
 	}
 	
-	function hyper_deactivate() {
+	function multi_cache_deactivate() {
 	
-	    wp_clear_scheduled_hook('hyper_clean');
+	    wp_clear_scheduled_hook('multi_cache_clean');
 	
 	    if ( file_exists( MULTI_CACHE_CONFIG ) )
 			unlink( MULTI_CACHE_CONFIG );

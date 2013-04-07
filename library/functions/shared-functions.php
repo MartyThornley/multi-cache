@@ -42,8 +42,8 @@
 	
 	    if ( !$multi_cache_charset ) 
 			$multi_cache_charset = 'UTF-8';
-	
-	    $buffer .= '<!-- hyper cache: ' . $multi_cache_name . ' ' . date('y-m-d h:i:s') .' -->';
+				
+	    $buffer .= '<!-- MultiCache: ' . $multi_cache_name . ' ' . date( 'M d Y H:i:s' ) .' -->';
 	
 	    $data['html'] = $buffer;
 	
@@ -51,12 +51,12 @@
 	
 	    if ( $multi_cache_browsercache ) {
 	        header( 'Cache-Control: max-age=' . $multi_cache_timeout );
-	        header( 'Expires: ' . gmdate( "D, d M Y H:i:s", time() + $multi_cache_timeout ) . " GMT" );
+	        header( 'Expires: ' . gmdate( "M d Y H:i:s", time() + $multi_cache_timeout ) . " GMT" );
 	    }
 	
 	    // True if user ask to NOT send Last-Modified
 	    if ( !$multi_cache_lastmodified )
-	        header( 'Last-Modified: ' . gmdate( "D, d M Y H:i:s", @filemtime( $hc_file ) ). " GMT" );
+	        header( 'Last-Modified: ' . gmdate( "M d Y H:i:s", @filemtime( $hc_file ) ). " GMT" );
 	    
 	    if ( ( $multi_cache_gzip && !empty($data['gz'] ) ) || ( $multi_cache_gzip_on_the_fly && !empty( $data['html'] ) && function_exists(' gzencode' ) ) ) {
 	        header('Content-Encoding: gzip');
